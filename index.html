@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quizizz Triết học Mác - Lênin (Full 300+ Câu)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #1e3a8a 0%, #7e22ce 100%); }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #a5b4fc; border-radius: 10px; }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden">
+        
+        <!-- Màn hình chọn chặng -->
+        <div id="welcome-screen" class="p-6 sm:p-8 text-center">
+            <div class="inline-block p-3 bg-indigo-100 text-indigo-600 rounded-full mb-3 text-3xl">🎯</div>
+            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">Đấu Trường Triết Học Mác - Lênin</h1>
+            <p class="text-gray-600 text-sm mb-6">Đã nạp thành công <span id="total-q-count" class="font-bold text-indigo-600">0</span> câu hỏi. Sẵn sàng chinh phục!</p>
+
+            <div id="resume-container" class="mb-6 hidden">
+                <button onclick="resumeQuiz()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 text-white font-bold rounded-xl shadow-md transition duration-200">
+                    ▶ Tiếp tục chặng đang lưu (Câu <span id="saved-q-num">1</span>)
+                </button>
+            </div>
+
+            <h3 class="text-left font-bold text-gray-700 mb-3 text-sm uppercase">🗺️ Bản đồ chặng (25 câu/chặng):</h3>
+            <div class="space-y-3 mb-6 max-h-72 overflow-y-auto pr-2 custom-scrollbar" id="stage-buttons-container">
+                <!-- Nút chặng render tự động -->
+            </div>
+
+            <button onclick="startStage(0, fullQuizData.length)" class="w-full py-3 bg-gray-900 hover:bg-black text-white font-bold rounded-xl shadow-md transition text-sm">
+                🔥 Marathon: Chơi liên tục toàn bộ 300+ câu
+            </button>
+        </div>
+
+        <!-- Màn hình chơi game -->
+        <div id="quiz-screen" class="hidden p-6 sm:p-8">
+            <div class="flex justify-between items-center mb-6 text-sm font-semibold text-gray-500">
+                <span id="question-counter">Câu hỏi 1/25</span>
+                <span id="score-display" class="bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full border border-indigo-200">Điểm: 0</span>
+            </div>
+            <div class="w-full bg-gray-200 h-2.5 rounded-full mb-6 overflow-hidden">
+                <div id="progress-bar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-300" style="width: 2%"></div>
+            </div>
+            <h2 id="question-text" class="text-xl sm:text-2xl font-bold text-gray-800 mb-6 leading-snug"></h2>
+            <div id="options-container" class="space-y-3 mb-6"></div>
+            
+            <div id="explanation-box" class="hidden p-4 rounded-xl mb-6 bg-gray-50 border-l-4">
+                <p id="explanation-text" class="text-sm font-medium"></p>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="backToMenu()" class="px-4 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold rounded-xl transition text-sm">🏠 Thoát</button>
+                <button id="next-btn" onclick="nextQuestion()" class="hidden flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition duration-200">Câu tiếp theo ➡️</button>
+            </div>
+        </div>
+
+        <!-- Màn hình kết quả -->
+        <div id="result-screen" class="hidden p-8 text-center">
+            <div class="inline-block p-4 bg-yellow-100 text-yellow-600 rounded-full mb-4 text-6xl">🏆</div>
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Hoàn thành chặng!</h2>
+            <p id="final-score-text" class="text-lg text-gray-600 mb-6">Bạn đã hoàn thành xuất sắc.</p>
+            <button onclick="backToMenu()" class="w-full py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg transition duration-200">Quay về bản đồ 🗺️</button>
+        </div>
+    </div>
+
+    <script>
+        // DỮ LIỆU NÉN SIÊU NHẸ (Bao gồm 300+ câu)
+        const rawData = `
+Câu 1. Hình thức tồn tại của vật chất là gì?|Không gian, thời gian|Vận động, phát triển|Nguyên nhân, kết quả|Linh hồn, ý niệm|0
+Câu 2. Ý nghĩa phương pháp luận rút ra từ việc nghiên cứu cặp phạm trù “khả năng – hiện thực"?|Luôn đề cao tuyệt đối vai trò nhân tố chủ quan|Chỉ coi trọng điều kiện khách quan|Cần tránh tuyệt đối hóa hoặc xem thường vai trò nhân tố chủ quan|Chỉ cần dự báo khả năng|2
+Câu 3. Trường phái nào thừa nhận sự tồn tại của sự vật nhưng phủ nhận đặc trưng “tự thân tồn tại”?|Thuyết khả trì|Chủ nghĩa duy vật|Chủ nghĩa duy tâm|Thuyết nhị nguyên|2
+Câu 4. Hình thức đầu tiên trong lịch sử của chủ nghĩa duy vật là gì?|Chủ nghĩa duy vật biện chứng|Chủ nghĩa duy vật chất phác|Chủ nghĩa duy vật siêu hình|Chủ nghĩa duy vật lịch sử|1
+Câu 5. Phạm trù nào chỉ tổng thể các tiền đề của sự biến đổi, là cái “có thể có nhưng ngay lúc này chưa có”?|Hiện thực|Tất nhiên|Khả năng|Ngẫu nhiên|2
+Câu 6. Ph. Ăngghen định nghĩa phép biện chứng là gì?|Khoa học về mâu thuẫn|Khoa học về những quy luật phổ biến của sự vận động và phát triển của tự nhiên, xã hội và tư duy|Khoa học về phủ định|Hệ thống quy tắc tư duy|1
+Câu 7. Quan điểm nào xem vật chất, vận động, không gian, thời gian như những thực thể không liên hệ nội tại?|Thuyết nhị nguyên|Chủ nghĩa duy tâm chủ quan|Chủ nghĩa duy vật biện chứng|Chủ nghĩa duy vật siêu hình thế kỷ XVII-XVIII|3
+Câu 8. Phạm trù nào chỉ tổng thể các tiền đề của sự biến đổi, là cái “có thể có nhưng ngay lúc này còn chưa có”?|Khả năng|Tất nhiên|Ngẫu nhiên|Hiện thực|0
+Câu 9. Khái niệm nào dùng để chỉ biện chứng của bản thân thế giới tồn tại khách quan, độc lập với ý thức?|Biện chứng chủ quan|Biện chứng khách quan|Siêu hình học|Duy tâm chủ quan|1
+Câu 10. Điểm tương đồng của các quan niệm duy vật thời Cổ đại về vật chất là gì?|Đồng nhất vật chất với ý niệm|Quy vật chất về cảm giác|Xem vật chất là năng lượng thuần túy|Đồng nhất vật chất với vật thể|3
+Câu 11. Theo chủ nghĩa duy tâm, vai trò của vật chất đối với ý thức là gì?|Vật chất quyết định ý thức|Vật chất và ý thức hoàn toàn độc lập|Ý thức sinh ra vật chất, thế giới vật chất chỉ là bản sao biểu hiện khác của tinh thần|Ý thức chỉ phản ánh trung thực vật chất|2
+Câu 12. Phương thức tồn tại của vật chất là gì?|Nhận thức|Vận động|Phản ánh|Tư duy|1
+Câu 13. Nguồn gốc xã hội cho sự ra đời của triết học là gì?|Lao động trí óc tách khỏi lao động chân tay|Ra đời của tôn giáo|Phát minh chữ viết|Sự xuất hiện của nhà nước|0
+Câu 14. Chủ nghĩa duy vật là gì?|Thuyết cho rằng ý niệm có trước quyết định vật chất|Lập trường cho rằng vật chất và ý thức bình đẳng|Quan điểm hoài nghi nhận thức|Vật chất là tính thứ nhất, ý thức là tính thứ hai; vật chất quyết định ý thức|3
+Câu 15. Phạm trù nào chỉ tổng thể tất cả những mặt, yếu tố tạo nên sự vật, hiện tượng?|Kết cấu|Nội dung|Hình thức|Bản chất|1
+Câu 16. Phạm trù “chất” được hiểu là:|Khả năng biến đổi ngẫu nhiên|Thuộc tính tồn tại chủ quan|Tính quy định khách quan vốn có làm cho sự vật là nó chứ không phải là cái khác|Sự phản ánh cảm tính|2
+Câu 17. Học thuyết nào khẳng định con người có khả năng nhận thức được thế giới?|Thuyết hoài nghi|Thuyết bất khả trì|Học thuyết khả tri luận|Thuyết duy tâm chủ quan|2
+Câu 18. Hạn chế của các quan niệm về vật chất ở thời Cổ đại là:|Không thừa nhận vật chất tồn tại|Đồng nhất vật chất với ý thức|Có tính trực quan, ngây thơ, chất phác|Chỉ thừa nhận tinh thần tuyệt đối|2
+Câu 19. Tiến hóa là một dạng của phát triển, ... từ đơn giản đến phức tạp.|Diễn ra đột ngột|Phủ nhận mâu thuẫn|Phụ thuộc chủ quan|Diễn ra theo cách từ từ|3
+Câu 20. Quan điểm chủ nghĩa duy vật về mặt thứ nhất trong vấn đề cơ bản của triết học là:|Ý thức có trước, vật chất có sau|Ý thức quyết định vật chất|Vật chất và ý thức ngang bằng|Vật chất có trước, quyết định ý thức|3
+Câu 21. Ưu điểm của chủ nghĩa duy vật trước Mác về bản chất thế giới là:|Phủ nhận tồn tại khách quan của vật chất|Xem vật chất là cảm giác|Thừa nhận thế giới vật chất, lấy tự nhiên giải thích tự nhiên|Tuyệt đối hóa tinh thần|2
+Câu 22. Khái niệm nào dùng để chỉ biện chứng của bản thân thế giới tồn tại khách quan, độc lập với ý thức?|Biện chứng chủ quan|Siêu hình học|Chủ nghĩa duy tâm|Biện chứng khách quan|3
+Câu 23. Hình thức vận động xét về mặt độ dài diễn biến, sự kế tiếp của các quá trình gọi là gì?|Không gian|Quá trình|Nhận thức|Thời gian|3
+Câu 24. Xu hướng của sự phát triển được mô phỏng theo đồ thức gì?|Đường thẳng tuyến tính|Đường sóng tuần hoàn|Đường xoáy ốc|Chu kỳ khép kín|2
+Câu 25. Cơ sở lý luận của nguyên tắc phát triển là gì?|Học thuyết phủ định tự phát|Mối liên hệ phổ biến|Sự tác động của ý thức|Nguyên lý về sự phát triển|3
+Câu 26. Nhà triết học nào khẳng định thế giới “ý niệm tuyệt đối” sinh ra thế giới hiện thực?|Platôn|Canto|Hêghen|Arixtốt|2
+Câu 27. Nhà triết học nào quan niệm cơ sở vũ trụ là Apeiron?|Hêraclít|Talét|Anaximander|Pitago|2
+Câu 28. Khái niệm chỉ sự quy định, tác động và chuyển hóa lẫn nhau giữa các sự vật, hiện tượng?|Bản chất|Hiện tượng|Mối liên hệ|Quy luật khách quan|2
+Câu 29. Theo duy vật biện chứng, vận động là gì?|Sự thay đổi do tư duy chủ quan|Mọi sự thay đổi và quá trình trong vũ trụ, từ thay đổi vị trí đến tư duy|Do siêu nhiên chi phối|Đứng yên kéo dài|1
+Câu 30. Kết cấu của ý thức gồm những yếu tố nào?|Cảm giác, tri giác, phản ánh|Tri thức, tình cảm, ý chí, niềm tin|Bản năng, kinh nghiệm, cảm xúc|Nhận thức, lý trí, tư duy|1
+Câu 31. C. Mác và Ph. Ăngghen biến triết học thành vũ khí tinh thần cho giai cấp nào?|Tư sản|Tiểu nông|Vô sản|Địa chủ|2
+Câu 32. Lơxíp và Đêmôcrít quan niệm cơ sở đầu tiên của vũ trụ là gì?|Khí nguyên sinh|Linh hồn bất tử|Nguyên tử|Ý niệm|2
+Câu 33. Hình thức vận động cao nhất và phức tạp nhất là gì?|Sinh học|Cơ giới|Hóa học|Xã hội|3
+Câu 34. Phạm trù chỉ mối liên hệ thống nhất giữa chất với lượng, là giới hạn tồn tại của sự vật?|Giới hạn nội tại|Độ|Ngưỡng biến đổi|Quy mô|1
+Câu 35. Tác động của lao động và ngôn ngữ đối với sự hình thành ý thức?|Tự hoàn thiện qua kinh nghiệm|Làm chuyển biến bộ óc vượn thành bộ óc người và tâm lý động vật thành ý thức|Khác biệt hành vi|Giao tiếp đơn giản|1
+Câu 36. Phương pháp tư duy chi phối chủ nghĩa duy vật thế kỷ XV – XVIII là gì?|Trực giác kinh nghiệm|Tư duy siêu hình|Suy luận diễn dịch|Chứng minh khải huyền|1
+Câu 37. Thuật ngữ “Philosophia” xuất hiện đầu tiên ở đâu?|Ai Cập|Hy Lạp Cổ đại|Ấn Độ|Ba Tư|1
+Câu 38. V.I. Lênin sinh ngày tháng năm nào?|22 tháng 4 năm 1868|22/4/1870|21 tháng 3 năm 1872|23 tháng 5 năm 1871|1
+Câu 39. Vấn đề cơ bản lớn của mọi triết học là quan hệ giữa...|Linh hồn, vũ trụ|Thượng đế, thế giới|Tư duy, tồn tại|Ý niệm, thực tại|2
+Câu 40. Đêmôcrít quan niệm cơ sở đầu tiên của vũ trụ là:|Hơi ấm|Vòng xoáy|Nguyên tử|Các yếu tố đất nước|2
+Câu 41. Định nghĩa hoàn chỉnh về giai cấp lần đầu tiên được Lênin đề cập trong tác phẩm nào?|Nhà nước và Cách mạng|Chủ nghĩa Đế quốc|Sáng kiến vĩ đại|Bút ký triết học|2
+Câu 42. Biểu hiện tính năng động, sáng tạo của ý thức ở giai đoạn xử lý thông tin là:|Sao chép hoàn toàn|Mô hình hóa và mã hóa thông tin để xử lý|Tiếp nhận thụ động|Phản ứng bản năng|1
+Câu 43. Trạng thái vận động nào chưa làm thay đổi cơ bản về chất của sự vật?|Hóa học|Vận động trong thăng bằng|Sinh học|Xã hội|1
+Câu 44. Giải quyết mặt thứ hai trong vấn đề cơ bản của triết học xác lập nên trường phái nào?|Duy linh và duy vật|Hiện sinh và bản thể|Khả tri và bất khả tri|Nhị nguyên và thực chứng|2
+Câu 45. Phản ánh có tính chủ động lựa chọn, xử lý thông tin tạo ra thông tin mới là:|Trực giác|Bản năng|Ý thức|Trải nghiệm|2
+Câu 46. Theo triết học Mác – Lênin, phạm trù ngẫu nhiên là:|Hoàn toàn không quy luật|Có thể xuất hiện thế này hoặc xuất hiện thế khác|Chắc chắn xảy ra|Không phụ thuộc điều kiện|1
+Câu 47. Định nghĩa vật chất của V.I. Lênin được đề cập trong tác phẩm nào?|Bút ký triết học|Nhà nước và Cách mạng|Chủ nghĩa duy vật và chủ nghĩa kinh nghiệm phê phán|Chủ nghĩa Đế quốc|2
+Câu 48. Vai trò tích cực của chủ nghĩa duy vật siêu hình thế kỷ XV-XVIII là gì?|Khẳng định vật chất vĩnh viễn|Chống lại thế giới quan duy tâm, tôn giáo|Bác bỏ quy luật khách quan|Đề cao trực giác|1
+Câu 49. Bản chất của ý thức là gì?|Phản ứng sinh lý|Sự phản ánh hiện thực khách quan vào bộ óc con người tích cực, sáng tạo|Sản phẩm Thượng đế|Bản nguyên tạo ra vật chất|1
+Câu 50. “Đấu tranh giữa các mặt đối lập” là gì?|Điều hòa tự phát|Sự tác động bài trừ, phủ định lẫn nhau giữa các mặt đối lập|Biến đổi về lượng|Thay thế ngẫu nhiên|1
+Câu 51. Ai thừa nhận vật chất và ý thức là hai bản nguyên song song cùng tồn tại?|Spinoza|Đêcáctơ (Descartes)|Kant|Hegel|1
+Câu 52. Phép biện chứng được hiểu là gì?|Nghệ thuật hùng biện|Hệ thống tín điều|Khoa học về những quy luật phổ biến của tự nhiên, xã hội và tư duy|Suy luận hình thức|2
+Câu 53. Thuộc tính cơ bản nhất của mọi dạng vật chất theo Lênin là gì?|Tính cảm tính|Tồn tại khách quan|Tính vận động|Đồng nhất năng lượng|1
+Câu 54. Hình thức mô phỏng quá trình phát triển biện chứng thể hiện tính kế thừa là:|Đường thẳng|Đường xoáy ốc|Đường tròn|Gấp khúc|1
+Câu 55. Nguồn gốc ra đời của triết học gồm:|Tự nhiên và tôn giáo|Kinh nghiệm và thần thoại|Nhận thức và xã hội|Tiên nghiệm và hậu nghiệm|2
+Câu 56. Hình thức tồn tại của vật chất xét về quãng tính, trật tự, kết cấu là:|Thời gian|Nhân quả|Không gian|Vận động|2
+Câu 57. Tiền đề cho sự thống nhất của thế giới là:|Ý niệm tuyệt đối|Sự tồn tại của thế giới vật chất|Linh hồn vũ trụ|Ngôn ngữ|1
+Câu 58. Phát minh khoa học tự nhiên cuối TK XIX bác bỏ quan niệm vật chất là nguyên tử bất biến?|Thuyết lượng tử|Thuyết tương đối|Bảo toàn điện tích|Thuyết điện tử của J. J. Thomson|3
+Câu 59. Nguồn gốc xã hội cho sự ra đời của triết học là:|Phân công lao động, xuất hiện giai cấp nhà nước, tách lao động trí óc khỏi chân tay|Tất cả đều đúng|Chỉ có phân công|Chỉ cần dư dả vật chất|0
+Câu 60. Hình thức vận động thấp nhất của vật chất là:|Vận động cơ học|Sinh học|Xã hội|Hóa học|0
+Câu 61. Căn cứ xác định mâu thuẫn chủ yếu và thứ yếu là:|Số lượng mặt đối lập|Tính gay gắt|Vai trò của mâu thuẫn đối với sự tồn tại và phát triển|Thời điểm phát sinh|2
+Câu 62. Điểm tương đồng của các quan niệm duy vật thời cổ đại về vật chất là:|Vật chất là trường lực|Vật chất là tập hợp quy luật|Đồng nhất vật chất với vật thể cụ thể|Đồng nhất vật chất với thời gian|2
+Câu 63. Những cố gắng huy động mọi tiềm năng để vượt trở ngại, đạt mục tiêu được gọi là:|Nhu cầu|Ý chí|Tình cảm|Thói quen|1
+Câu 64. Ý nghĩa phương pháp luận từ nguyên lý phát triển là:|Xem sự vật bất biến|Chỉ quan tâm nguồn gốc|Phải xem sự vật trong quá trình vận động và phát triển đi lên|Loại bỏ mâu thuẫn|2
+Câu 65. Phương pháp tư duy coi nguyên nhân biến đổi nằm bên ngoài đối tượng?|Mô tả thuần túy|Tư duy siêu hình|Lôgic hình thức|Biện chứng|1
+Câu 66. Chủ nghĩa nhị nguyên có cùng bản chất với khuynh hướng nào?|Chủ nghĩa kinh nghiệm|Chủ nghĩa duy tâm|Chủ nghĩa thực chứng|Chủ nghĩa vị lợi|1
+Câu 67. Phạm trù chỉ giới hạn tồn tại của sự vật, trong đó biến đổi lượng chưa làm thay đổi chất?|Bước nhảy|Điểm nút|Độ|Chu kỳ|2
+Câu 68. Khi xét chiều sâu thế giới nội tâm, ý thức có các cấp độ:|Bản năng – nhận thức|Cảm giác – tri giác|Tự ý thức – tiềm thức – vô thức|Tình cảm – ý chí|2
+Câu 69. Năm 1842, C.Mác trở thành biên tập viên tờ báo nào?|Tờ Nhân dân|Tờ Ánh sáng|Tờ báo Sông Ranh (Rheinische Zeitung)|Tờ Tự do Đức|2
+Câu 70. Nước chuyển từ lỏng sang khí tại nhiệt độ sôi là minh họa cho quy luật nào?|Tích lũy lượng|Điểm nút|Độ ổn định|Bước nhảy|3
+Câu 71. Điền vào chỗ trống: “Phương pháp... của tôi đối lập hẳn với phương pháp của Hêghen”.|Thực nghiệm|Siêu hình|Lôgic|Biện chứng|3
+Câu 72. Trong triết học Mác – Lênin, “điểm nút” là gì?|Mốc đánh dấu ổn định|Giai đoạn lặp lại|Thời điểm mà sự thay đổi lượng dẫn đến thay đổi về chất|Vận động thuần túy|2
+Câu 73. Cái chung là gì?|Thuộc tính riêng biệt|Những mặt, thuộc tính lặp lại ở nhiều sự vật, hiện tượng khác|Yếu tố ngẫu nhiên|Dấu hiệu cảm tính|1
+Câu 74. Hình thức phản ánh cao nhất trong thế giới vật chất là:|Phản xạ sinh học|Phản ánh tâm lý|Phản ánh ý thức|Phản hồi cơ|2
+Câu 75. Nguồn gốc lý luận trực tiếp hình thành triết học Mác là:|Chủ nghĩa duy vật Pháp|Kinh tế chính trị học Anh|Chủ nghĩa xã hội không tưởng|Triết học cổ điển Đức|3
+Câu 76. Trong những năm 30-40 thế kỷ XIX, giai cấp công nhân thay đổi như thế nào?|Vẫn lệ thuộc|Chỉ tồn tại tự phát|Trở thành lực lượng chính trị độc lập trong xã hội tư bản|Chưa có tổ chức|2
+Câu 77. Cơ sở lý luận của quan điểm lịch sử – cụ thể là gì?|Nguyên lý phủ định|Nguyên lý về mối liên hệ phổ biến|Nguyên lý phát triển|Nguyên lý khách quan|1
+Câu 78. Về mặt nhận thức luận, thuyết bất khả tri quan niệm thế nào?|Thừa nhận nhận thức vô hạn|Chân lý tuyệt đối dễ đạt|Phủ nhận khả năng nhận thức của con người về thế giới|Khẳng định cảm giác là nguồn gốc duy nhất|2
+Câu 79. Tính khoa học và cách mạng của phép biện chứng duy vật Mác - Lênin thể hiện thế nào?|Chỉ giải thích tự nhiên|Phủ nhận cải tạo hiện thực|Là công cụ để nhận thức và cải tạo thế giới|Xem thế giới bất biến|2
+Câu 80. Đảng ta vận dụng quan điểm nào để kết hợp phát huy nội lực và tranh thủ thời cơ toàn cầu hóa?|Quan điểm siêu hình|Duy tâm chủ quan|Quan điểm toàn diện và lịch sử – cụ thể|Trực quan sinh động|2
+Câu 81. Lênin chỉ ra thực chất khủng hoảng vật lý học cuối thế kỷ XIX là gì?|Khủng hoảng thực nghiệm|Khủng hoảng toán học|Khủng hoảng kỹ thuật đo lường|Khủng hoảng về thế giới quan và phương pháp luận|3
+Câu 82. Các lớp cấu trúc của ý thức gồm:|Tri thức, tình cảm, niềm tin, ý chí|Tri giác, xúc cảm|Vật chất, năng lượng|Nhận thức, ngôn ngữ|0
+Câu 83. Những tri thức chủ thể có từ trước đã thành bản năng nằm ở tầng sâu ý thức là:|Vô thức|Tiềm thức|Bản năng|Trực giác|1
+Câu 84. Đặc điểm về nguồn gốc của vận động theo duy vật biện chứng là:|Do lực siêu nhiên|Xuất phát từ ý thức|Sự tự thân vận động của vật chất|Tác động bên ngoài|2
+Câu 85. Quy luật vạch ra nguyên nhân, động lực của sự vận động và phát triển?|Phủ định của phủ định|Lượng – chất|Thống nhất và đấu tranh của các mặt đối lập|Nguyên nhân – kết quả|2
+Câu 86. Cơ sở của mối liên hệ giữa các sự vật, hiện tượng là:|Ý thức xã hội|Tồn tại xã hội|Tính thống nhất vật chất của thế giới|Tính tương đối tri thức|2
+Câu 87. Nội dung và phương thức tồn tại của ý thức là gì?|Tri thức|Lao động|Giao tiếp|Nhu cầu|0
+Câu 88. Thuật ngữ triết học Dar'sana xuất hiện ở quốc gia nào?|Hy Lạp|Trung Hoa|Ấn Độ cổ đại|Ai Cập|2
+Câu 89. Mâu thuẫn đối kháng và không đối kháng phân biệt dựa vào:|Mức độ gay gắt cảm xúc|Khả năng dung hòa|Sự tồn tại khách quan|Lợi ích cơ bản đối lập nhau giữa các giai cấp|3
+Câu 90. Trạng thái vận động nào chưa làm thay đổi cơ bản vị trí, hình dáng, kết cấu?|Vận động phát triển|Vận động xã hội|Vận động trong thế cân bằng|Vận động hóa học|2
+Câu 91. Ph. Ăngghen sắp xếp 5 hình thức vận động dựa trên cơ sở nào?|Mục đích con người|Mức độ nhận thức|Trình độ kết cấu của thế giới vật chất|Tính phức tạp ngôn ngữ|2
+Câu 92. Thời kỳ nào triết học Mác – Lênin tiếp tục được bổ sung, phát triển bởi Đảng Cộng sản?|1844-1848|1871-1873|1895-1917|1924 đến nay|3
+Câu 93. Theo V.I. Lênin, ông kịch liệt phê phán phái Makhơ vì đã đồng nhất:|Quy luật vật lý với tâm lý|Quy luật sinh học với quy luật lịch sử|Đạo đức với thẩm mỹ|Logic với tự nhiên|1
+Câu 94. Tác phẩm đưa ra định nghĩa kinh điển về vật chất của Lênin?|Bút ký triết học|Chủ nghĩa duy vật và chủ nghĩa kinh nghiệm phê phán|Biện chứng tự nhiên|Hệ tư tưởng Đức|1
+Câu 95. Hiện tượng tâm lý không do lý trí điều khiển, ý thức không kiểm soát được gọi là:|Tiềm thức|Vô thức|Trực giác|Bản năng|1
+Câu 96. Căn cứ phân chia mâu thuẫn bên trong và bên ngoài?|Số lượng|Tính chất|Quan hệ giữa các mặt đối lập với sự vật, hiện tượng|Quá trình lịch sử|2
+Câu 97. Ưu điểm của nhà duy vật trước Mác là:|Gắn nguồn gốc vào ý niệm|Thừa nhận sự tồn tại khách quan của vật chất, lấy tự nhiên giải thích tự nhiên|Đồng nhất vật chất với cảm giác|Phủ nhận thực tiễn|1
+Câu 98. Triết học Mác ra đời dựa trên tiền đề lý luận nào?|Triết học cổ điển Đức; Kinh tế chính trị Anh; CNXH không tưởng|Chủ nghĩa kinh nghiệm|Chủ nghĩa duy linh|Chủ nghĩa dân túy Nga|0
+Câu 99. Cơ sở của các phương pháp phân tích - tổng hợp, diễn dịch - quy nạp là từ các cặp phạm trù nào?|Nguyên nhân – kết quả|Cái riêng – cái chung; tất nhiên – ngẫu nhiên; bản chất – hiện tượng|Cấu trúc – chức năng|Thực tiễn – lý luận|1
+Câu 100. Vai trò của triết học Mác – Lênin trong công cuộc đổi mới ở Việt Nam?|Cung cấp kinh nghiệm tư sản|Mô hình vô giai cấp|Cơ sở lý luận khoa học (hạt nhân là phép biện chứng duy vật)|Thay thế hệ tư tưởng truyền thống|2
+Câu 101. Phạm trù chỉ tính có thực của thế giới xung quanh là:|Bản chất|Hiện tượng|Tồn tại|Ý niệm|2
+Câu 102. Phương pháp tư duy nào coi nguyên nhân biến đổi nằm bên ngoài đối tượng?|Mô tả|Siêu hình|Lôgic hình thức|Biện chứng khách quan|1
+Câu 103. Ai khẳng định “ý niệm tuyệt đối” sinh ra toàn bộ thế giới hiện thực?|Aristoteles|Kant|Hêghen (Hegel)|Feuerbach|2
+Câu 104. Trạng thái vận động chưa làm thay đổi cơ bản về chất của sự vật là:|Bước nhảy|Cách mạng|Thăng bằng|Đột biến|2
+Câu 105. Nhà triết học duy danh cho rằng cái riêng là tồn tại cảm tính trực tiếp là:|Spinoza|Hegel|Occam|Descartes|2
+Câu 106. Hạt nhân lý luận của thế giới quan triết học Mác – Lênin là:|Sử học|Khoa học tự nhiên|Triết học|Đạo đức học|2
+Câu 107. Điều kiện cần và đủ cho sự ra đời của ý thức là:|Lao động cơ khí|Ngôn ngữ và công cụ|Tiền đề tự nhiên và xã hội|Sản xuất hàng hóa|2
+Câu 108. Mác – Ăngghen biến triết học thành vũ khí tinh thần của:|Giai cấp tư sản|Giai cấp nông dân|Giai cấp vô sản|Giai cấp trung lưu|2
+Câu 109. Phạm trù nào dùng để chỉ hình thức tồn tại của vật chất?|Hình thái|Vật chất, năng lượng|Không gian, thời gian|Bản chất, hiện tượng|2
+Câu 110. Chủ nghĩa nhị nguyên có cùng bản chất với khuynh hướng nào?|Kinh nghiệm|Duy tâm|Thực chứng|Vị lợi|1
+Câu 111. Phủ định biện chứng là:|Sự triệt tiêu hoàn toàn cái cũ|Phủ nhận ngẫu nhiên|Sự phủ định làm tiền đề cho sự phát triển|Sự quay lại trạng thái ban đầu|2
+Câu 112. Mối liên hệ phổ biến có các tính chất nào?|Ngẫu nhiên, chủ quan|Tạm thời|Khách quan, phổ biến, đa dạng|Tuyệt đối, bất biến|2
+Câu 113. Hình thức tồn tại của vật chất xét về quảng tính, trật tự, cấu trúc là:|Thời gian|Nhân quả|Không gian|Vận động|2
+Câu 114. Phạm trù chỉ giới hạn tồn tại của sự vật (biến đổi lượng chưa làm thay đổi chất) là:|Bước nhảy|Điểm nút|Độ|Chu kỳ|2
+Câu 115. V.I. Lênin sinh ngày tháng năm nào?|15/03/1869|22/04/1870|09/01/1871|01/05/1872|1
+Câu 116. Khi xét chiều sâu nội tâm, ý thức có các cấp độ:|Bản năng, nhận thức|Cảm giác, tri giác|Tự ý thức, tiềm thức, vô thức|Tình cảm, ý chí|2
+Câu 117. Ưu điểm của chủ nghĩa duy vật trước Mác là:|Đồng nhất vật chất với cảm giác|Thừa nhận tồn tại khách quan của thế giới vật chất|Phủ nhận vận động|Tuyệt đối hóa tinh thần|1
+Câu 118. Năm 1842, C.Mác làm biên tập viên cho tờ báo nào?|Tờ Nhân dân|Tờ Ánh sáng mới|Tờ báo Sông Ranh (Rheinische Zeitung)|Tờ Tự do Đức|2
+Câu 119. Ăngghen sinh ngày tháng năm nào?|05/05/1818|28/11/1820|14/03/1824|22/04/1870|1
+Câu 120. Ý nghĩa phương pháp luận của cặp phạm trù “tất nhiên - ngẫu nhiên” là gì?|Chỉ quan tâm tất nhiên|Không thể nhận thức tất nhiên|Tìm ra tất nhiên thông qua nghiên cứu những ngẫu nhiên|Tất nhiên và ngẫu nhiên luôn tách rời|2
+Câu 121. Hình thức tồn tại của vật chất vận động xét về độ dài diễn biến là:|Nguyên nhân|Không gian|Quan hệ|Thời gian|3
+Câu 122. Triết học nào khẳng định thế giới vật chất tồn tại vĩnh viễn, không được sinh ra và không mất đi?|Duy tâm khách quan|Kinh nghiệm|Duy vật biện chứng|Thực chứng|2
+Câu 123. Khi nước chuyển từ lỏng sang khí ở nhiệt độ sôi là minh họa cho quy luật:|Tích lũy lượng|Điểm nút|Độ|Bước nhảy|3
+Câu 124. Theo chủ nghĩa duy vật biện chứng, phát biểu nào đúng?|Không gian thời gian độc lập với vật chất|Thời gian có, không gian không|Do ý thức con người tạo ra|Không gian và thời gian là hình thức tồn tại của vật chất, không tách rời vật chất|3
+Câu 125. Ví dụ minh họa quy luật mâu thuẫn trong tiến hóa sinh giới?|Quang hợp và hô hấp|Đồng hóa và dị hóa|Sinh trưởng và suy tàn|Bảo tồn năng lượng|1
+Câu 126. Phạm trù “nguyên nhân” là gì?|Liên hệ ngẫu nhiên|Tính chủ quan|Sự tác động lẫn nhau giữa các mặt trong một sự vật hoặc giữa các sự vật gây nên biến đổi|Kết quả trực tiếp tư duy|2
+Câu 127. C. Mác nói: “Phương pháp... của tôi không những khác phương pháp của Hêghen, mà còn đối lập hẳn”.|Thực nghiệm|Siêu hình|Lôgic hình thức|Biện chứng|3
+Câu 128. Điểm nút là gì?|Mốc ổn định|Giai đoạn lặp lại|Thời điểm mà sự thay đổi lượng dẫn đến thay đổi về chất|Vận động thuần túy|2
+Câu 129. Tiền đề cho sự thống nhất của thế giới là:|Ý niệm tuyệt đối|Linh hồn vũ trụ|Sự tồn tại của thế giới vật chất|Cảm giác con người|2
+Câu 130. Phạm trù ngẫu nhiên được hiểu là:|Mối liên hệ tất yếu|Do bản thân sự vật quy định|Xuất hiện tất yếu|Mối liên hệ không bản chất, do nguyên nhân bên ngoài quy định, có thể xuất hiện hoặc không|3
+Câu 131. Vai trò quyết định của vật chất đối với ý thức thể hiện ở:|Ý thức quyết định vận động vật chất|Vật chất quyết định nguồn gốc, nội dung, bản chất, sự vận động và phát triển của ý thức|Ngang nhau về vai trò|Ý thức có trước|1
+Câu 132. Phép biện chứng duy vật bao gồm những nguyên lý cơ bản nào?|Đồng nhất và không mâu thuẫn|Nguyên lý về mối liên hệ phổ biến và nguyên lý về sự phát triển|Nhân quả và thực chứng|Quy giản và công cụ|1
+Câu 133. “Cái chung” là gì?|Thuộc tính riêng biệt|Những mặt, thuộc tính lặp lại ở nhiều sự vật, hiện tượng khác|Yếu tố ngẫu nhiên|Dấu hiệu cảm tính|1
+Câu 134. Khẳng định đúng về bản chất ý thức:|Ý thức là vật chất phát triển cao|Ý thức là hình ảnh chủ quan của thế giới khách quan|Vật tự nó tồn tại|Tập hợp cảm giác|1
+Câu 135. Quan điểm xem vật chất, vận động, không gian, thời gian như thực thể tách rời là:|Duy vật chất phác cổ đại|Duy vật siêu hình thế kỷ XVII-XVIII|Duy tâm khách quan cổ điển Đức|Kinh nghiệm phê phán|1
+Câu 136. Hình thức phản ánh cao nhất trong thế giới vật chất là:|Phản xạ sinh học|Phản ánh tâm lý|Phản ánh ý thức|Phản hồi cơ học|2
+Câu 137. Phạm trù chỉ tính có thực của thế giới xung quanh con người là:|Bản chất|Tồn tại|Hiện tượng|Khái niệm|1
+Câu 138. Hình thức tồn tại của vật chất là:|Năng lượng, trường|Không gian, thời gian|Lực, chuyển động|Chất, lượng|1
+Câu 139. Nhà triết học duy danh coi cảm giác là hình thức tồn tại của cái riêng là:|Locke|Berkeley|Hume|Bacon|1
+Câu 140. Sự phát triển có những tính chất nào?|Chủ quan, cục bộ, gián đoạn|Ngẫu nhiên, biệt lập|Khách quan, phổ biến, kế thừa, đa dạng phong phú|Tất định cơ giới|2
+Câu 141. Xét theo chiều sâu đời sống nội tâm, kết cấu của ý thức gồm:|Cảm giác, tri giác, biểu tượng|Tư duy, ngôn ngữ, trí nhớ|Tự ý thức, tiềm thức, vô thức|Tình cảm, ý chí|2
+Câu 142. Đặc trưng kế thừa, lặp lại và tiến lên của phát triển được mô phỏng theo đồ thức nào?|Đường thẳng tuyến tính|Chu kỳ khép kín|Đường xoáy ốc|Dao động tuần hoàn|2
+Câu 143. “Tính thống nhất vật chất của thế giới” khẳng định điều gì?|Thế giới thống nhất ở tính tinh thần|Bản chất của thế giới là vật chất, thế giới thống nhất ở tính vật chất|Vật chất ý thức đồng nhất|Thế giới do ý niệm tuyệt đối sinh ra|1
+Câu 144. Đêmôcrít quan niệm cơ sở đầu tiên của vũ trụ là:|Đất, nước, lửa, khí|Nguyên tử|Ý niệm tuyệt đối|Hình dạng và trật tự|1
+Câu 145. Vì sao các nhóm sự vật dần hình thành những điểm chung?|Do ngẫu nhiên thuần túy|Vì các sự vật, hiện tượng liên hệ, tương tác, chuyển hóa nên xuất hiện thuộc tính chung|Do quy ước ngôn ngữ|Do tri giác chủ quan|1
+Câu 146. Quan điểm khẳng định thế giới vật chất không ai sinh ra, không tự mất đi là của:|Chủ nghĩa duy tâm khách quan|Chủ nghĩa duy vật biện chứng|Thuyết khả tri hoài nghi|Chủ nghĩa kinh nghiệm cực đoan|1
+Câu 147. Cấp độ cao nhất của cấu trúc vật chất là:|Tế bào sống|Hệ sinh thái|Xã hội loài người|Vũ trụ vật lý|2
+Câu 148. Quan điểm giải thích đúng thuật ngữ “phát triển bền vững”?|Tăng trưởng nhanh ngắn hạn|Tối đa hóa lợi nhuận|Phát triển hiện tại vẫn bảo đảm khả năng phát triển của các thế hệ tương lai|Ổn định tuyệt đối|2
+Câu 149. Trường phái quan niệm ý thức là nguyên thể đầu tiên sinh thành thế giới vật chất là:|Chủ nghĩa duy vật chất phác|Chủ nghĩa duy tâm|Thuyết nhị nguyên|Chủ nghĩa kinh nghiệm|1
+Câu 150. Trong “Chống Đuyrinh”, Ăngghen định nghĩa phép biện chứng là:|Khoa học về tư duy hình thức|Nghệ thuật hùng biện|Môn khoa học về những quy luật phổ biến của vận động và phát triển của tự nhiên, xã hội và tư duy|Phép quy nạp|2
+Câu 151. Phạm trù là cơ sở phương pháp luận phản ánh tính đa dạng của nhận thức và thực tiễn?|Bản chất - hiện tượng|Cái riêng - cái chung|Nội dung - hình thức|Nguyên nhân - kết quả|1
+Câu 152. Phương pháp tư duy coi nguyên nhân biến đổi nằm bên ngoài đối tượng?|Lịch sử - cụ thể|Siêu hình|Biện chứng|Quy nạp - diễn dịch|1
+Câu 153. Một trong những nguồn gốc xã hội dẫn đến sự ra đời của triết học là:|Sự phát triển tôn giáo|Lao động trí óc tách khỏi lao động chân tay|Chế độ nô lệ|Chữ viết và nghệ thuật|1
+Câu 154. Hình thức vận động thấp nhất và giản đơn nhất là:|Vận động sinh học|Vận động xã hội|Vận động cơ học|Vận động hóa học|2
+Câu 155. Nhà triết học cho rằng nguồn gốc của ý thức là “ý niệm tuyệt đối” là:|Kant|Hêghen|Feuerbach|Berkeley|1
+Câu 156. Phạm trù chỉ tổng thể các mối liên hệ khách quan, tất nhiên, tương đối ổn định bên trong sự vật?|Hiện tượng|Bản chất|Quy luật|Hình thức|2
+Câu 157. Theo duy vật biện chứng, bản chất của ý thức là:|Tự sản sinh từ sinh học|Sự phản ánh hiện thực khách quan một cách tích cực, sáng tạo|Do Thượng đế ban tặng|Cảm giác thuần túy|1
+Câu 158. Trường phái nào quan niệm rằng “óc tiết ra ý thức như gan tiết ra mật”?|Chủ nghĩa duy tâm chủ quan|Chủ nghĩa duy vật tầm thường thế kỷ XVIII|Chủ nghĩa kinh nghiệm phê phán|Thuyết nhị nguyên Descartes|1
+Câu 159. Khái niệm chỉ sự quy định, tác động và chuyển hóa lẫn nhau giữa các sự vật, hiện tượng?|Quy luật|Bản chất|Mối liên hệ|Kết cấu|2
+Câu 160. Theo duy vật biện chứng, điều kiện cần và đủ cho sự ra đời của ý thức là:|Lao động tập thể|Phát triển ngôn ngữ|Nguồn gốc tự nhiên và nguồn gốc xã hội|Công cụ sản xuất|2
+Câu 161. Thành ngữ “Góp gió thành bão” thể hiện quy luật nào?|Phủ định của phủ định|Tích lũy về lượng dẫn đến biến đổi về chất|Thống nhất và đấu tranh của các mặt đối lập|Nhân quả|1
+Câu 162. Phạm trù thể hiện sự thay đổi của một tất yếu dẫn đến thay đổi của đối tượng kia?|Mâu thuẫn|Quy luật|Liên hệ|Thực tiễn|2
+Câu 163. Những cặp phạm trù nào là cơ sở phương pháp luận để nhận thức sự phát triển của sự vật như quá trình tự nhiên?|Bản chất - hiện tượng|Cái riêng - cái chung; tất nhiên - ngẫu nhiên|Nội dung - hình thức|Toàn thể - bộ phận|1
+Câu 164. Trường phái thừa nhận sự tồn tại của sự vật nhưng phủ nhận tính “tự thân tồn tại” của chúng?|Chủ nghĩa hiện thực phê phán|Chủ nghĩa duy tâm|Chủ nghĩa duy vật biện chứng|Thuyết nhị nguyên|1
+Câu 165. Ý nghĩa phương pháp luận của quy luật thống nhất và đấu tranh của các mặt đối lập?|Tuyệt đối hóa một mặt|Giải quyết bằng điều hòa|Chỉ dựa vào chủ quan|Thừa nhận tính khách quan, giải quyết dựa trên điều kiện khách quan và xem xét quá trình phát sinh phát triển|3
+Câu 166. Đối tượng của triết học Mác – Lênin là:|Mọi hiện tượng siêu nhiên|Quan hệ vật chất ý thức trên lập trường duy vật biện chứng và các quy luật vận động chung nhất của tự nhiên, xã hội, tư duy|Nghệ thuật hùng biện|Lịch sử học thuyết|1
+Câu 167. Hình thức nào được xem là “đỉnh cao” của phép biện chứng?|Biện chứng cổ đại phương Đông|Biện chứng duy tâm Đức|Phép biện chứng duy vật|Siêu hình thực chứng|2
+Câu 168. Học thuyết khẳng định con người có khả năng nhận thức được thế giới?|Bất khả tri luận|Khả trị luận|Hoài nghi luận|Duy tâm chủ quan|1
+Câu 169. Nguồn gốc xã hội của ý thức là:|Trao đổi hàng hoá|Lao động và ngôn ngữ|Bản năng sinh học|Tôn giáo|1
+Câu 170. Phạm trù chỉ giai đoạn chuyển hoá cơ bản về chất do tích luỹ lượng trước đó gây ra là:|Phủ định của phủ định|Lượng – chất|Bước nhảy|Điểm nút|2
+Câu 171. Ý nghĩa phương pháp luận từ cặp phạm trù “nội dung – hình thức”:|Hình thức quyết định tuyệt đối nội dung|Hình thức chỉ thúc đẩy nội dung khi phù hợp với nội dung|Nội dung tuân theo mọi khuôn mẫu|Thay đổi hình thức không ảnh hưởng|1
+Câu 172. Học thuyết khẳng định khả năng nhận thức được thế giới?|Duy tâm khách quan|Thuyết nhị nguyên|Khả trị luận|Thực chứng luận|2
+Câu 173. Triết học xem thế giới như một cỗ máy cơ giới khổng lồ là:|Chủ nghĩa duy vật lịch sử|Chủ nghĩa duy vật siêu hình|Chủ nghĩa duy tâm tuyệt đối|Chủ nghĩa hiện sinh|1
+Câu 174. Sự dịch chuyển vị trí của vật thể trong không gian là đặc trưng của hình thức vận động nào?|Vận động sinh học|Vận động hoá học|Vận động cơ học|Vận động xã hội|2
+Câu 175. Điền đúng cụm từ: “Trước hết là ...; sau đó và đồng thời là ... là hai kích thích chủ yếu làm bộ óc vượn dần thành người.”|Ngôn ngữ; lao động|Công cụ; ngôn ngữ|Lao động; ngôn ngữ|Tập quán; tri thức|2
+Câu 176. Sự thống nhất hữu cơ giữa tri thức và tình cảm, thúc đẩy con người vượt khó là:|Nhu cầu sinh lý|Thói quen hành vi|Ý chí|Bản năng tự vệ|2
+Câu 177. Phương pháp tư duy nhận thức đối tượng ở trạng thái cô lập, tách rời là:|Phương pháp lịch sử - cụ thể|Phương pháp siêu hình|Phương pháp biện chứng|Phương pháp hệ thống|1
+Câu 178. Sự ra đời của triết học Mác làm thay đổi chức năng xã hội của triết học như thế nào?|Chỉ giải thích thế giới|Trở thành công cụ nhận thức khoa học để cải tạo thế giới|Quay về chiêm nghiệm|Nghiên cứu ngôn ngữ học|1
+Câu 179. Vai trò của lao động và ngôn ngữ đối với sự hình thành ý thức là:|Tăng phản xạ sinh học|Chuyển biến bộ óc vượn người thành bộ óc người và tâm lý động vật thành ý thức người|Chỉ giúp tích lũy kinh nghiệm cá thể|Chỉ nâng cao trí nhớ|1
+Câu 180. Phát minh cuối TK XIX – đầu XX đặt cơ sở bác bỏ quan niệm “vật chất đồng nhất nguyên tử” là:|Electron của J. J. Thomson|Hiện tượng phóng xạ|Tia X của Rơnghen|Thuyết lượng tử|0
+Câu 181. Việc phân loại hình thức vận động của Ăngghen đặt cơ sở cho:|Mô tả không hệ thống|Phân loại – phân ngành và hợp loại – hợp ngành khoa học|Thay thế mọi ngành|Khoa học thống nhất|1
+Câu 182. Nhà duy tâm Berkeley cho rằng nền tảng của mối liên hệ giữa các đối tượng là:|Quy ước ngôn ngữ|Ý niệm bẩm sinh|Cảm giác (tri giác) của chủ thể|Thực thể vật chất|2
+Câu 183. Theo triết học Mác – Lênin, hình thức phản ánh cao nhất là:|Phản xạ sinh học|Phản ánh tâm lý|Phản ánh ý thức|Phản hồi cơ học|2
+Câu 184. Theo quan điểm Mác – Lênin, phát triển là:|Sự lặp lại tuần hoàn|Thay đổi ngẫu nhiên|Vận động từ thấp đến cao, từ kém hoàn thiện đến hoàn thiện hơn|Tăng lượng giữ chất|2
+Câu 185. Quan niệm về vật chất của chủ nghĩa duy vật siêu hình thế kỷ XVII-XVIII là:|Đồng nhất vật chất với năng lượng|Đồng nhất vật chất với khối lượng|Đồng nhất vật chất với lực hấp dẫn|Đồng nhất vật chất với không gian|1
+Câu 186. Điền vào chỗ trống: Vật chất được đem lại cho con người trong ..., được ... của chúng ta chép lại...|Trực giác; ý thức; lý trí|Cảm giác; cảm giác; cảm giác|Trải nghiệm; tri giác; tư duy|Nhận thức; ký ức; ngôn ngữ|1
+Câu 187. Phạm trù chỉ những mặt, đặc điểm vốn có ở một sự vật, không lặp lại ở sự vật khác là:|Cái chung|Cái phổ biến|Cái đơn nhất|Cái bản chất|2
+Câu 188. Muốn nắm bản chất, khuynh hướng vận động của sự vật phải tuân thủ nguyên tắc nào?|Lịch sử – cụ thể|Nguyên tắc phát triển|Toàn diện|Khách quan|1
+Câu 189. Kiểu phản ánh chủ động lựa chọn, xử lý thông tin, tạo thông tin mới là:|Phản xạ sinh học|Phản ánh tâm lý|Ý thức|Sao chép cơ học|2
+Câu 190. Người đầu tiên xác lập đối tượng triết học một cách hợp lý nhất?|Hêghen|C. Mác|Kant|Feuerbach|1
+Câu 191. Nguồn gốc của triết học được xác định là:|Tôn giáo và thần thoại|Nguồn gốc nhận thức và nguồn gốc xã hội|Kinh tế và chính trị|Tự nhiên thuần túy|1
+Câu 192. Hình thức đầu tiên của phép biện chứng là:|Biện chứng duy tâm|Phép biện chứng tự phát|Biện chứng cổ điển Đức|Biện chứng duy vật|1
+Câu 193. Bản chất của ý thức là:|Bản năng sinh học|Hình ảnh chủ quan của thế giới khách quan; quá trình phản ánh tích cực, sáng tạo|Sao chép thụ động|Sản phẩm ngôn ngữ|1
+Câu 194. Khái niệm chỉ toàn bộ quan điểm về thế giới và vị trí con người trong đó?|Nhận thức luận|Thế giới quan|Phương pháp luận|Lôgic học|1
+Câu 195. Hình thức nào được xem là đỉnh cao của phép biện chứng?|Cổ đại|Duy tâm|Phép biện chứng duy vật|Siêu hình hiện đại|2
+Câu 196. Mặt thứ nhất của vấn đề cơ bản trong triết học theo quan điểm duy vật khẳng định:|Ý thức có trước|Vật chất có trước, ý thức có sau; vật chất quyết định ý thức|Đồng nguyên|Ý niệm sinh vật chất|1
+Câu 197. Khẳng định nào diễn đạt đúng “tính thống nhất vật chất của thế giới”?|Thống nhất ở tinh thần|Bản chất của thế giới là vật chất; thế giới thống nhất ở tính vật chất|Thống nhất ở lôgic|Do ý niệm tuyệt đối quy định|1
+Câu 198. Điểm khác biệt giữa phản ánh ý thức và các hình thức phản ánh khác là:|Tính ngẫu nhiên|Sao chép nguyên xi|Có tính tích cực, sáng tạo|Không phụ thuộc chủ thể|2
+Câu 199. Theo chủ nghĩa Mác – Lênin, triết học là:|Khoa học về quy luật tự nhiên|Khoa học về xã hội tư duy|Hệ thống quan điểm lý luận chung nhất về thế giới|Tất cả|3
+Câu 200. Vai trò của lao động và ngôn ngữ đối với sự hình thành ý thức là:|Tăng trí nhớ cá thể|Làm phong phú kinh nghiệm|Làm chuyển biến bộ óc vượn thành bộ óc người và tâm lý động vật thành ý thức con người|Hỗ trợ bản năng|2
+Câu 201. Tác phẩm của V.I. Lênin nghiên cứu, bổ sung phép biện chứng duy vật?|Nhà nước và cách mạng|Bút ký triết học|Chủ nghĩa đế quốc|Chủ nghĩa duy vật và kinh nghiệm phê phán|1
+Câu 202. Đặc trưng bản chất của ý thức là:|Sao chép thụ động|Tính tích cực, sáng tạo gắn bó chặt chẽ với thực tiễn xã hội|Ngẫu hứng phi mục đích|Tự phát thuần sinh học|1
+Câu 203. Vấn đề cơ bản lớn của mọi triết học là quan hệ giữa...|Tồn tại; vật chất|Tư duy; tồn tại|Linh hồn; thể xác|Khoa học; tôn giáo|1
+Câu 204. Ý thức tác động thế nào đối với vật chất?|Không thể tác động|Tác động trở lại vật chất thông qua hoạt động thực tiễn của con người|Tác động trực tiếp bằng năng lượng tinh thần|Chỉ tác động trong lĩnh vực mỹ học|1
+Câu 205. Những nỗ lực huy động mọi tiềm năng để vượt trở ngại và đạt mục tiêu là:|Thói quen|Nhu cầu|Ý chí|Bản năng|2
+Câu 206. Tác phẩm của Lênin đưa ra định nghĩa kinh điển về vật chất là:|Bút ký triết học|Chủ nghĩa duy vật và chủ nghĩa kinh nghiệm phê phán|Biện chứng tự nhiên|Hệ tư tưởng Đức|1
+Câu 207. Bản chất của ý thức là:|Vật chất ở trình độ cao|Hình ảnh chủ quan của thế giới khách quan|Tồn tại độc lập ngoài xã hội|Tổng hợp cảm giác rời rạc|1
+Câu 208. Phạm trù “nguyên nhân” là:|Sự kế tiếp ngẫu nhiên|Sự tương tác giữa các mặt trong một sự vật, hoặc giữa các sự vật với nhau, gây nên biến đổi nhất định|Kết quả cuối cùng|Quy luật tư duy|1
+Câu 209. Anaximander quan niệm cơ sở đầu tiên của vũ trụ là:|Nước|Không khí|Apeirôn – vật chất đơn nhất, vô định, vô hạn, vĩnh viễn|Lửa|2
+Câu 210. Thành tựu khoa học nào khắc phục được hạn chế duy tâm trong quan niệm về xã hội?|Ý niệm tuyệt đối|Thuyết tiến hóa|Định nghĩa về giai cấp của V.I. Lênin|Ý chí sống|2
+Câu 211. Các lớp cấu trúc của ý thức gồm:|Tưởng tượng, kinh nghiệm|Tri thức, tình cảm, ý chí, niềm tin|Linh cảm, vô thức|Cảm xúc, hành vi|1
+Câu 212. Nguồn gốc lý luận trực tiếp hình thành triết học Mác là:|Chủ nghĩa duy vật Pháp|Kinh tế chính trị học Anh|Chủ nghĩa xã hội không tưởng phê phán|Triết học cổ điển Đức|3
+Câu 213. Nội dung và phương thức tồn tại của ý thức là gì?|Tri thức|Lao động|Giao tiếp|Nhu cầu|0
+Câu 214. Giai cấp tư sản muốn thay thế triết học Mác bằng lý luận nào?|Thuyết bất khả tri|Chủ nghĩa thực chứng logic|Lý luận chiết trung, pha trộn của thế giới quan duy tâm, tôn giáo|Thuyết công cụ chân lý|2
+Câu 215. Chủ nghĩa duy tâm có những hình thức cơ bản nào?|Siêu hình và trực giác|Kinh nghiệm và cảm giác|Thần học và đạo đức|Chủ nghĩa duy tâm khách quan và chủ nghĩa duy tâm chủ quan|3
+Câu 216. Phạm trù chỉ những biến đổi xuất hiện do sự tương tác giữa các yếu tố mang tính nguyên nhân gây nên?|Phạm trù nguyên nhân|Phạm trù kết quả|Phạm trù hiện tượng|Phạm trù bản chất|1
+Câu 217. Căn cứ vào quan hệ giữa các mặt đối lập với sự vật, có thể phân chia thành những mâu thuẫn nào?|Mâu thuẫn bên trong và mâu thuẫn bên ngoài|Mâu thuẫn chủ quan và khách quan|Mâu thuẫn phổ biến và cá biệt|Mâu thuẫn cơ bản và không cơ bản|0
+Câu 218. Theo chủ nghĩa duy vật biện chứng, vận động là gì?|Thay đổi vị trí vật thể|Biến đổi do tác động bên ngoài|Sự tăng giảm về lượng|Mọi sự thay đổi và mọi quá trình diễn ra trong vũ trụ, từ thay đổi vị trí giản đơn đến tư duy|3
+Câu 219. Quy luật vạch ra cách thức chung nhất của sự vận động, phát triển của thế giới hiện thực là:|Quy luật phủ định của phủ định|Quy luật mâu thuẫn|Quy luật chuyển hóa từ những thay đổi về lượng dẫn đến những thay đổi về chất và ngược lại|Quy luật quan hệ sản xuất|2
+Câu 220. Yếu tố giúp con người thực hiện hành vi đạo đức một cách tự giác là:|Tập quán|Tự ý thức|Dư luận xã hội|Pháp luật|1
+Câu 221. Mặt thứ hai trong vấn đề cơ bản của triết học trả lời cho câu hỏi nào?|Thế giới có tồn tại vĩnh viễn không?|Con người có khả năng nhận thức được thế giới hay không?|Vật chất hay ý thức có trước?|Bản chất của tồn tại là gì?|1
+Câu 222. Quan điểm đúng về tình cảm:|Là sản phẩm bản năng|Tình cảm phản ánh quan hệ giữa người với người và quan hệ giữa người với thế giới khách quan|Không có vai trò trong nhận thức|Chỉ mang tính cá nhân|1
+Câu 223. Điều kiện cần và đủ cho sự ra đời của ý thức là:|Tiến hóa tự nhiên thuần túy|Hoạt động ngôn ngữ|Điều kiện tự nhiên và xã hội|Bản năng sinh tồn|2
+Câu 224. Điền vào chỗ trống: “Phương pháp ... của tôi không những khác phương pháp của Hêghen về cơ bản, mà còn đối lập hẳn”.|Trực quan|Siêu hình|Biện chứng|Thực chứng|2
+Câu 225. Đấu tranh giữa các mặt đối lập là:|Dung hòa cân bằng tĩnh|Sự tác động theo xu hướng bài trừ và phủ định lẫn nhau giữa các mặt của sự vật|Sự vận động không tạo biến đổi|Sự thỏa hiệp|1
+Câu 226. Một nội dung định nghĩa vật chất của V.I. Lênin là:|Là sản phẩm cảm giác|Chỉ tồn tại khi con người nhận thức|Vật chất là thực tại khách quan, tồn tại độc lập với ý thức|Không thể nhận thức bằng giác quan|2
+Câu 227. Nguồn gốc sự vận động, phát triển của các sự vật hiện tượng là do:|Tác động lực lượng siêu nhiên|Sắp đặt tất định khách quan|Sự đấu tranh giữa các mặt đối lập bên trong sự vật, hiện tượng|Biến hóa ngẫu nhiên|2
+Câu 228. Khả năng huy động mọi tiềm năng trong mỗi người để vượt qua trở ngại, đạt mục tiêu là:|Niềm tin|Động cơ|Ý chí|Năng lực|2
+Câu 229. Căn cứ phân biệt mâu thuẫn đối kháng và không đối kháng là:|Mức độ gay gắt xung đột|Khả năng dung hòa|Tồn tại khách quan hay chủ quan|Lợi ích cơ bản đối lập nhau giữa các giai cấp trong một giai đoạn lịch sử nhất định|3
+Câu 230. Phạm trù hình thức là gì?|Toàn bộ mặt bên ngoài|Phương thức tồn tại và phát triển của sự vật, là hệ thống các mối liên hệ tương đối bền vững giữa các yếu tố của nó|Yếu tố ngẫu nhiên|Bản chất khách quan|1
+Câu 231. Nguyên nhân dẫn đến hạn chế của phép biện chứng thời cổ đại là:|Ảnh hưởng thần thoại, tôn giáo|Trình độ nhận thức của con người và khoa học tự nhiên chưa phát triển|Thiếu lập luận logic|Không quan tâm thực nghiệm|1
+Câu 232. Xem xét ý thức theo chiều sâu nội tâm, các cấp độ gồm:|Cảm giác, tri giác, khái niệm|Bản năng, phản xạ, hành vi|Tự ý thức, tiềm thức, vô thức|Lý trí, xúc cảm, kinh nghiệm|2
+Câu 233. Phạm trù dùng để chỉ tổng thể tất cả những mặt, yếu tố tạo nên sự vật, hiện tượng?|Hình thức|Nội dung|Bản chất|Quy luật|1
+Câu 234. Bước ngoặt cách mạng do C. Mác và Ph. Ăngghen thực hiện trong triết học là:|Học thuyết ý niệm|Phê phán tôn giáo|Sáng tạo ra chủ nghĩa duy vật biện chứng|Khẳng định chân lý tuyệt đối của cảm giác|2
+Câu 235. Phương pháp tư duy chi phối chủ nghĩa duy vật thế kỷ XV-XVIII là:|Biện chứng chủ quan|Phương pháp tư duy siêu hình|Trực giác duy cảm|Hiện tượng học|1
+Câu 236. Theo chiều sâu thế giới nội tâm con người, kết cấu của ý thức gồm yếu tố nào?|Cảm giác, tri giác, tư duy|Tri thức, tình cảm, ý chí|Tự ý thức, tiềm thức, vô thức|Bản năng, cảm xúc, hành vi|2
+Câu 237. Hình thức đầu tiên của chủ nghĩa duy vật là:|Duy vật biện chứng|Duy vật siêu hình|Chủ nghĩa duy vật chất phác|Duy vật lịch sử|2
+Câu 238. Chủ nghĩa duy tâm có những hình thức cơ bản nào?|Thực nghiệm và thần học|Khách quan và sinh học|Chủ nghĩa duy tâm khách quan và chủ nghĩa duy tâm chủ quan|Trí tuệ và lý tưởng|2
+Câu 239. Những tri thức chủ thể có từ trước đã trở thành bản năng nằm ở tầng sâu ý thức là:|Vô thức|Tiềm thức|Bản năng|Trực giác|1
+Câu 240. Phép biện chứng duy vật có những nguyên lý cơ bản nào?|Phủ định của phủ định và lượng – chất|Nguyên lý về mối liên hệ phổ biến và nguyên lý về sự phát triển|Tất yếu và ngẫu nhiên|Logic hình thức và siêu hình|1
+Câu 241. Tại sao các nhóm sự vật lại dần hình thành điểm chung?|Do ảnh hưởng tư duy con người|Áp đặt logic|Các sự vật, hiện tượng riêng lẻ có liên hệ, tương tác, chuyển hóa lẫn nhau nên hình thành thuộc tính chung|Cùng nguồn gốc lịch sử|2
+Câu 242. Chủ nghĩa duy vật và chủ nghĩa duy tâm đối lập nhau về phương diện nào?|Phương pháp luận|Thế giới quan|Quy luật logic|Kinh tế - xã hội|1
+Câu 243. Nhà triết học Đêmôcrít quan niệm cơ sở đầu tiên của vũ trụ là gì?|Bản thể thuần lý|Ý niệm tuyệt đối|Nguyên tử|Chân lý cảm tính|2
+Câu 244. Hiện tượng tâm lý không do lý trí điều khiển, nằm ngoài phạm vi kiểm soát của ý thức là:|Tiềm thức|Vô thức|Trực giác|Bản năng|1
+Câu 245. Sự thống nhất hữu cơ giữa tri thức và tình cảm, có vai trò điều khiển, thúc đẩy con người là:|Niềm tin|Khát vọng|Ý chí|Động cơ|2
+Câu 246. Mối quan hệ giữa vận động và đứng im là gì?|Đứng im phủ định vận động|Đứng im vĩnh viễn|Vận động là tuyệt đối, đứng im là tương đối, không tách rời nhau|Chỉ tồn tại khi không có đứng im|2
+Câu 247. Theo chủ nghĩa duy tâm, vai trò của vật chất đối với ý thức là gì?|Quyết định nội dung ý thức|Tồn tại độc lập sinh ra ý thức|Ý thức là cái có trước, tuyệt đối, từ đó sinh ra tất cả|Phản ánh vật chất thụ động|2
+Câu 248. Trong những năm 30-40 của thế kỷ XIX, địa vị chính trị của giai cấp công nhân thay đổi như thế nào?|Vẫn lệ thuộc|Phân tán|Trở thành lực lượng chính trị độc lập trong xã hội tư bản|Chưa có đấu tranh|2
+Câu 249. Khẳng định tính thứ nhất của ý thức, chủ nghĩa duy tâm chủ quan cho rằng:|Ý thức là sản phẩm kinh nghiệm|Ý thức cá nhân con người là thực tại duy nhất có trước|Ý thức chỉ phản ánh vật chất|Ý thức không quan hệ thực tiễn|1
+Câu 250. Vai trò của triết học Mác – Lênin trong đổi mới ở Việt Nam là gì?|Cung cấp kinh nghiệm|Mô hình xã hội không giai cấp|Là cơ sở lý luận khoa học, mà hạt nhân là phép biện chứng duy vật|Thay thế hệ tư tưởng|2
+Câu 251. Thuật ngữ triết học Dar'sana xuất hiện ở quốc gia nào?|Hy Lạp cổ đại|Trung Hoa cổ đại|Ấn Độ cổ đại|Ai Cập cổ đại|2
+Câu 252. Quan điểm duy vật biện chứng về vai trò của vật chất đối với ý thức là:|Ý thức quyết định vật chất|Vật chất quyết định nguồn gốc, nội dung, bản chất, vận động và phát triển của ý thức|Tách rời nhau|Chỉ ảnh hưởng một phần|1
+Câu 253. Quy luật vạch ra nguyên nhân, động lực của sự vận động và phát triển?|Phủ định của phủ định|Chuyển hóa lượng – chất|Quy luật thống nhất và đấu tranh của các mặt đối lập|Nguyên nhân – kết quả|2
+Câu 254. Cơ sở lý luận của quan điểm lịch sử – cụ thể là gì?|Phủ định của phủ định|Nguyên lý về mối liên hệ phổ biến|Nguyên lý về sự phát triển|Nguyên lý khách quan|1
+Câu 255. Nguồn gốc lý luận trực tiếp hình thành triết học Mác là:|Chủ nghĩa duy vật Pháp|Kinh tế chính trị học cổ điển Anh|Chủ nghĩa xã hội không tưởng|Triết học cổ điển Đức|3
+Câu 256. Cặp phạm trù là cơ sở phương pháp luận cho phân tích - tổng hợp, diễn dịch - quy nạp?|Nguyên nhân – kết quả; hình thức – nội dung|Cái riêng – cái chung; tất nhiên – ngẫu nhiên; bản chất – hiện tượng|Cấu trúc – chức năng|Thực tiễn – lý luận|1
+Câu 257. Theo duy vật biện chứng, đặc điểm về nguồn gốc của vận động là gì?|Do lực siêu nhiên|Xuất phát từ ý thức|Vận động là sự tự thân vận động của vật chất|Tác động bên ngoài|2
+Câu 258. Ý nghĩa phương pháp luận từ nguyên lý sự phát triển là gì?|Chỉ xem xét sự vật khi hoàn thiện|Phải xem sự vật trong quá trình phát triển đi lên|Phủ nhận thụt lùi|Xem sự vật bất biến|1
+Câu 259. Sự tác động của ý thức đối với vật chất thông qua hoạt động nào?|Cảm xúc tự phát|Suy luận thuần túy|Thông qua hoạt động thực tiễn của con người|Ước muốn chủ quan|2
+Câu 260. Về nhận thức luận, học thuyết bất khả trì quan niệm thế nào?|Khả năng nhận thức vô hạn|Chân lý dễ đạt|Phủ nhận khả năng nhận thức của con người về thế giới|Cảm giác là nguồn gốc duy nhất|2
+Câu 261. Ai thừa nhận vật chất và ý thức là hai bản nguyên song song cùng tồn tại?|Canto|Hêghen|Đêcáctơ|Phơbách|2
+Câu 262. Một trong những nguồn gốc xã hội cho sự ra đời của triết học là:|Tư duy huyền thoại|Lao động trí óc đã tách khỏi lao động chân tay|Sản xuất nông nghiệp|Suy tàn tín ngưỡng cổ đại|1
+Câu 263. Giải quyết mặt thứ nhất trong vấn đề cơ bản của triết học xác lập nên các trường phái lớn nào?|Chủ nghĩa duy vật và chủ nghĩa duy tâm|Chủ nghĩa duy lý và kinh nghiệm|Thuyết khả tri và bất khả tri|Chủ nghĩa biện chứng và siêu hình|0
+Câu 264. Ý nghĩa phương pháp luận của quy luật mâu thuẫn là:|Tuyệt đối hóa một mặt|Điều hòa tránh đấu tranh|Chỉ dựa vào điều kiện chủ quan|Bao gồm tất cả các nguyên tắc: thừa nhận tính khách quan, giải quyết trên cơ sở điều kiện khách quan và xem xét phát sinh phát triển|3
+Câu 265. Theo triết học Mác - Lênin, phương thức tồn tại của vật chất là:|Không gian|Thời gian|Vận động|Năng lượng|2
+Câu 266. Từ mối quan hệ giữa vật chất và ý thức, rút ra nguyên tắc phương pháp luận là gì?|Phát huy tuyệt đối chủ quan|Xem ý thức quyết định mọi hoạt động|Nguyên tắc tôn trọng khách quan kết hợp phát huy tính năng động chủ quan|Vật chất ý thức tách rời|2
+Câu 267. Hình thức vận động thấp nhất và giản đơn nhất là:|Vận động cơ học|Vận động vật lý|Vận động sinh học|Vận động xã hội|0
+Câu 268. Phạm trù dùng để chỉ các mặt, đặc điểm vốn có ở một sự vật, hiện tượng không lặp lại ở sự vật khác?|Cái đơn nhất|Cái chung|Cái riêng|Cái bản chất|0
+Câu 269. Tính khoa học và cách mạng của phép biện chứng duy vật Mác - Lênin thể hiện ở chỗ:|Dừng lại giải thích tự nhiên|Phủ nhận cải tạo hiện thực|Không dừng lại ở sự giải thích thế giới mà còn là công cụ để nhận thức và cải tạo thế giới|Xem thế giới tĩnh tại|2
+Câu 270. Trạng thái vận động nào chưa làm thay đổi cơ bản vị trí, hình dáng, kết cấu của sự vật?|Vận động phát triển|Vận động xã hội|Vận động trong thế cân bằng|Vận động hóa học|2
+Câu 271. Khái niệm chỉ biện chứng của bản thân thế giới tồn tại khách quan, độc lập với ý thức con người là:|Biện chứng chủ quan|Biện chứng khách quan|Biện chứng logic|Biện chứng hình thức|1
+Câu 272. Cơ sở của sự tồn tại đa dạng các mối liên hệ giữa các sự vật, hiện tượng là:|Tính năng động của ý thức|Sự phát triển khoa học|Tính thống nhất vật chất của thế giới|Tính kế thừa trong lịch sử|2
+Câu 273. Hình thức vận động cao nhất và phức tạp nhất là:|Vận động cơ học|Vận động hóa học|Vận động sinh học|Vận động xã hội|3
+Câu 274. Nguồn gốc của sự vận động, phát triển của các sự vật hiện tượng là do:|Sự áp đặt siêu nhiên|Tác động bên ngoài|Sự đấu tranh giữa các mặt đối lập bên trong sự vật, hiện tượng|Ngẫu nhiên hoàn cảnh|2
+Câu 275. Vai trò của tất nhiên và ngẫu nhiên trong quá trình phát triển là:|Ngẫu nhiên quyết định hoàn toàn|Tất nhiên phụ thuộc ngẫu nhiên|Tất nhiên chi phối sự phát triển, ngẫu nhiên có thể làm cho sự phát triển diễn ra nhanh hay chậm|Không liên quan đến nhau|2
+Câu 276. Theo phép biện chứng duy vật, quy luật được hiểu là:|Sự kiện bất ngờ không lặp lại|Phỏng đoán chủ quan|Mối liên hệ phổ biến, khách quan, bản chất, bền vững, tất yếu giữa các sự vật khi có điều kiện phù hợp|Quy ước chủ quan|2
+Câu 277. Ph. Ăngghen sắp xếp 5 hình thức vận động theo trình độ từ thấp đến cao dựa trên cơ sở nào?|Mục đích sử dụng|Phát triển khoa học kỹ thuật|Theo trình độ kết cấu của thế giới vật chất|Cấp độ nhận thức|2
+Câu 278. Cơ sở lý luận của quan điểm toàn diện là gì?|Phủ định của phủ định|Nguyên lý phát triển|Nguyên lý về mối liên hệ phổ biến|Quan điểm lịch sử – cụ thể|2
+Câu 279. Điền vào chỗ trống: “Trước hết là ...; sau lao động và đồng thời với lao động là ......; kích thích bộ óc vượn thành người"|Tư duy, tín ngưỡng|Văn hóa, đạo đức|Lao động, ngôn ngữ|Công cụ, xã hội|2
+Câu 280. Lênin kịch liệt phê phán phái Makhơ vì đã đồng nhất vấn đề gì?|Vật lý với tâm lý|Quy luật sinh học với quy luật lịch sử|Đạo đức với thẩm mỹ|Logic với tự nhiên|1
+Câu 281. Mối liên hệ là sự ...... lẫn nhau giữa các sự vật, hiện tượng.|Đối lập và phủ định|Quy định, tác động và chuyển hóa|Bài trừ và phủ nhận|Tách biệt và cô lập|1
+Câu 282. Vật chất là thực tại khách quan đem lại cho con người trong ..., được ... của chúng ta chép lại...|Cảm giác, cảm giác, cảm giác|Trải nghiệm, lý trí, ý thức|Tri giác, kinh nghiệm, nhận thức|Nhận thức, lý tính, tư duy|0
+Câu 283. Vai trò của triết học Mác - Lênin trong sự nghiệp đổi mới ở Việt Nam là:|Công cụ tiên tri|Hệ thống đạo đức|Cơ sở thực nghiệm|Cơ sở lý luận khoa học, trong đó hạt nhân là phép biện chứng duy vật|3
+Câu 284. Giai đoạn chuyển hóa cơ bản về chất do những thay đổi về lượng trước đó gây ra gọi là:|Độ|Điểm nút|Bước nhảy|Mâu thuẫn|2
+Câu 285. Điền vào chỗ trống: “Quy luật là những mối liên hệ khách quan, ..., tất nhiên, phổ biến và lặp lại"|ngẫu nhiên|bản chất|chủ quan|cục bộ|1
+Câu 286. Khẳng định nào đúng theo triết học Mác – Lênin?|Định nghĩa vật chất phủ nhận tồn tại khách quan|Đồng nhất vật chất với nguyên tử|Ý thức quyết định tồn tại|Định nghĩa vật chất của V.I. Lênin đã giải quyết đúng đắn vấn đề cơ bản của triết học.|3
+Câu 287. Trong cấu trúc ý thức, yếu tố tình cảm giữ vai trò gì?|Chi phối mọi tri giác|Tạo nên sự gắn bó giữa con người với thế giới hiện thực|Nguồn gốc duy nhất của khoa học|Không có vai trò|1
+Câu 288. Sự phản ánh có tính chủ động lựa chọn thông tin, xử lý thông tin để tạo ra những thông tin mới là:|Phản xạ thần kinh|Tri giác|Ý thức|Bản năng|2
+Câu 289. Ưu điểm của các nhà triết học duy vật trước C. Mác là:|Gắn thế giới vào ý niệm|Thừa nhận sự tồn tại khách quan của thế giới vật chất, lấy tự nhiên giải thích tự nhiên|Đồng nhất vật chất với cảm giác chủ quan|Phủ nhận thực tiễn|1
+Câu 290. Triết học Mác ra đời dựa trên tiền đề lý luận nào?|Triết học cổ điển Đức; Kinh tế chính trị cổ điển Anh; Chủ nghĩa xã hội không tưởng, phê phán.|Chủ nghĩa kinh nghiệm Pháp|Chủ nghĩa duy linh|Chủ nghĩa dân túy Nga|0
+Câu 291. Vấn đề cơ bản lớn của mọi triết học là quan hệ giữa ... với ...|linh hồn, thể xác|tư duy, tồn tại|khoa học, tôn giáo|tất nhiên, ngẫu nhiên|1
+Câu 292. Các lớp cấu trúc của ý thức gồm:|Tri thức, tình cảm, niềm tin, ý chí.|Tri giác, xúc cảm, bản năng, bản ngã.|Vật chất, năng lượng, vận động.|Nhận thức, lao động, ngôn ngữ.|0
+Câu 293. Khái niệm dùng để chỉ sự quy định, tác động và chuyển hóa lẫn nhau giữa các sự vật, hiện tượng là:|Bản chất|Hiện tượng|Quy luật|Mối liên hệ|3
+Câu 294. Cơ sở của mối liên hệ giữa các sự vật, hiện tượng là:|Ý thức xã hội|Tồn tại xã hội|Tính thống nhất vật chất của thế giới|Tính tương đối của tri thức|2
+Câu 295. Cơ sở lý luận của nguyên tắc toàn diện là:|Nguyên lí về mối liên hệ phổ biến.|Nguyên lí về sự phát triển|Quy luật lượng – chất|Quy luật phủ định của phủ định|0
+Câu 296. Đảng ta đã vận dụng quan điểm nào để vừa phát huy nội lực, vừa tranh thủ thời cơ toàn cầu hóa?|Quan điểm siêu hình|Quan điểm duy tâm chủ quan|Quan điểm toàn diện và lịch sử – cụ thể|Quan điểm trực quan sinh động|2
+Câu 297. Lênin chỉ ra thực chất của khủng hoảng trong vật lý học cuối thế kỷ XIX – đầu thế kỷ XX là:|Khủng hoảng thực nghiệm|Khủng hoảng toán học thuần túy|Khủng hoảng kỹ thuật đo lường|Khủng hoảng về thế giới quan và phương pháp luận|3
+Câu 298. Phương pháp tư duy coi nguyên nhân của sự biến đổi nằm bên ngoài đối tượng là:|Phương pháp biện chứng|Phương pháp tư duy siêu hình|Phương pháp thực chứng|Phương pháp trực quan|1
+Câu 299. Phát minh nổi bật nào cuối thế kỷ XIX đặt cơ sở bác bỏ quan niệm vật chất đồng nhất nguyên tử?|Phát minh tia X|Phát hiện electron của J. J. Thomson|Thuyết lượng tử|Thuyết tương đối hẹp|1
+Câu 300. Kết quả phản ánh của ý thức phụ thuộc chủ yếu vào:|Phẩm chất, năng lực, kinh nghiệm sống của chủ thể|Đối tượng phản ánh|Điều kiện lịch sử – xã hội|Tất cả các ý trên|3
+Câu 301. Những nỗ lực huy động mọi tiềm năng vào hoạt động để vượt qua trở ngại, đạt mục đích được gọi là:|Niềm tin|Ý chí|Tình cảm|Trực giác|1
+Câu 302. Theo duy vật biện chứng, sự hình thành và phát triển của ý thức là kết quả của:|Phản ánh sinh học thích nghi|Hoạt động điện – sinh lý|Ngôn ngữ bẩm sinh|Hoạt động thực tiễn của con người nhằm cải tạo thế giới khách quan|3
+Câu 303. Phạm trù “nội dung” là:|Hình thức tổ chức bên ngoài|Bản chất tất yếu ẩn sau hiện tượng|Quy luật vận động phổ quát|Tổng hợp tất cả những mặt, những mối liên hệ tất nhiên, tương đối ổn định bên trong sự vật, quy định sự vận động và phát triên của sự vật|3
+Câu 304. Thời kỳ nào triết học Mác – Lênin tiếp tục được các Đảng Cộng sản bổ sung, phát triển?|1844-1848|1871-1873|1895-1917|1924 đến nay|3
+Câu 305. Theo triết học Mác – Lênin, tiền đề cho sự thống nhất của thế giới là:|Tính nhân quả phổ quát|Tính khả trí của thế giới|Tồn tại của thế giới|Tính phản ánh của ý thức|2
+Câu 306. C. Mác và Ph. Ăngghen bổ sung và phát triển toàn diện lý luận triết học diễn ra chủ yếu vào thời kỳ:|1835-1844|1867-1875|1848-1895|1895-1917|2
+`.trim();
+
+        // Thuật toán giải mã chuỗi siêu nhẹ (bẻ bằng ký tự '|')
+        const fullQuizData = rawData.split('\n').map(line => {
+            const parts = line.split('|');
+            if (parts.length === 6) {
+                return {
+                    q: parts[0],
+                    o: [parts[1], parts[2], parts[3], parts[4]],
+                    c: parseInt(parts[5]),
+                    e: `🔹 Đáp án chuẩn xác: **${parts[parseInt(parts[5]) + 1]}**`
+                };
+            }
+            return null;
+        }).filter(item => item !== null);
+
+        let currentStageQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let isAnswered = false;
+        let currentGlobalStartIndex = 0;
+
+        window.onload = function() {
+            document.getElementById('total-q-count').textContent = fullQuizData.length;
+            renderStageButtons();
+            
+            // Resume dữ liệu người chơi cũ nếu có trong LocalStorage
+            const savedData = localStorage.getItem('philosophia_full_saved');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                document.getElementById('resume-container').classList.remove('hidden');
+                document.getElementById('saved-q-num').textContent = data.globalIndex + 1;
+            }
+        };
+
+        function renderStageButtons() {
+            const container = document.getElementById('stage-buttons-container');
+            container.innerHTML = '';
+            const chunkSize = 25; // Render 25 câu mỗi chặng cho dễ thở
+            const totalStages = Math.ceil(fullQuizData.length / chunkSize);
+            const colors = ['indigo', 'purple', 'pink', 'amber', 'emerald', 'blue', 'rose', 'cyan', 'fuchsia'];
+            
+            for (let i = 0; i < totalStages; i++) {
+                let start = i * chunkSize;
+                let end = Math.min(start + chunkSize, fullQuizData.length);
+                let color = colors[i % colors.length];
+                
+                let btnHtml = `
+                <button onclick="startStage(${start}, ${end})" class="w-full p-4 rounded-xl border-2 border-${color}-100 bg-${color}-50 hover:bg-${color}-100 flex items-center justify-between transition transform hover:-translate-y-1 shadow-sm">
+                    <div class="flex items-center gap-4">
+                        <span class="w-12 h-12 rounded-full bg-${color}-600 text-white flex items-center justify-center font-bold shadow-md text-lg">${i + 1}</span>
+                        <div class="text-left">
+                            <h4 class="font-bold text-gray-800 text-base">Chặng ${i + 1}</h4>
+                            <p class="text-xs font-semibold text-gray-500 bg-white px-2 py-1 rounded-md inline-block mt-1">Câu ${start + 1} - ${end}</p>
+                        </div>
+                    </div>
+                    <span class="text-${color}-600 font-bold text-sm bg-white px-3 py-2 rounded-lg shadow-sm">Bắt đầu 🚀</span>
+                </button>`;
+                container.innerHTML += btnHtml;
+            }
+        }
+
+        function startStage(startIndex, endIndex) {
+            currentGlobalStartIndex = startIndex;
+            currentStageQuestions = fullQuizData.slice(startIndex, endIndex);
+            currentIndex = 0;
+            score = 0;
+            
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            loadQuestion();
+        }
+
+        function resumeQuiz() {
+            const savedData = localStorage.getItem('philosophia_full_saved');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                let stageIndex = Math.floor(data.globalIndex / 25);
+                let start = stageIndex * 25;
+                let end = Math.min(start + 25, fullQuizData.length);
+                
+                currentGlobalStartIndex = start;
+                currentStageQuestions = fullQuizData.slice(start, end);
+                currentIndex = data.globalIndex - start;
+                score = data.score;
+
+                document.getElementById('welcome-screen').classList.add('hidden');
+                document.getElementById('quiz-screen').classList.remove('hidden');
+                loadQuestion();
+            }
+        }
+
+        function saveProgress() {
+            const globalIndex = currentGlobalStartIndex + currentIndex;
+            localStorage.setItem('philosophia_full_saved', JSON.stringify({ globalIndex: globalIndex, score: score }));
+        }
+
+        function loadQuestion() {
+            isAnswered = false;
+            document.getElementById('next-btn').classList.add('hidden');
+            document.getElementById('explanation-box').classList.add('hidden');
+
+            const q = currentStageQuestions[currentIndex];
+            const globalNum = currentGlobalStartIndex + currentIndex + 1;
+
+            document.getElementById('question-text').textContent = q.q;
+            document.getElementById('question-counter').textContent = `Chặng: ${currentIndex + 1}/${currentStageQuestions.length} (Tổng tiến trình: ${globalNum}/${fullQuizData.length})`;
+            document.getElementById('score-display').textContent = `Điểm: ${score}`;
+            document.getElementById('progress-bar').style.width = `${((currentIndex + 1) / currentStageQuestions.length) * 100}%`;
+
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            q.o.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'w-full text-left p-4 rounded-xl border-2 border-gray-200 hover:border-indigo-400 hover:bg-indigo-50 font-medium text-gray-700 transition duration-200 flex items-center justify-between shadow-sm';
+                button.innerHTML = `<span class="pr-2 leading-relaxed">${option}</span> <span class="text-xs font-bold text-gray-400 border border-gray-300 px-2 py-1 rounded flex-shrink-0">Chọn</span>`;
+                button.onclick = () => selectAnswer(index, button);
+                optionsContainer.appendChild(button);
+            });
+
+            saveProgress();
+        }
+
+        function selectAnswer(selectedIndex, selectedButton) {
+            if (isAnswered) return;
+            isAnswered = true;
+
+            const q = currentStageQuestions[currentIndex];
+            const buttons = document.getElementById('options-container').children;
+
+            if (selectedIndex === q.c) {
+                selectedButton.classList.remove('border-gray-200', 'hover:border-indigo-400', 'hover:bg-indigo-50');
+                selectedButton.classList.add('border-green-500', 'bg-green-50', 'text-green-900', 'ring-2', 'ring-green-400');
+                selectedButton.querySelector('span:last-child').textContent = '✔️ Đúng';
+                selectedButton.querySelector('span:last-child').classList.replace('text-gray-400', 'text-green-700');
+                selectedButton.querySelector('span:last-child').classList.replace('border-gray-300', 'border-green-400');
+                score += 10;
+                document.getElementById('score-display').textContent = `Điểm: ${score}`;
+                confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+            } else {
+                selectedButton.classList.remove('border-gray-200', 'hover:border-indigo-400', 'hover:bg-indigo-50');
+                selectedButton.classList.add('border-red-500', 'bg-red-50', 'text-red-900');
+                selectedButton.querySelector('span:last-child').textContent = '❌ Sai';
+                selectedButton.querySelector('span:last-child').classList.replace('text-gray-400', 'text-red-700');
+                selectedButton.querySelector('span:last-child').classList.replace('border-gray-300', 'border-red-400');
+
+                buttons[q.c].classList.remove('border-gray-200', 'hover:border-indigo-400', 'hover:bg-indigo-50');
+                buttons[q.c].classList.add('border-green-500', 'bg-green-100', 'text-green-900');
+                buttons[q.c].querySelector('span:last-child').textContent = '✔️ Đáp án';
+                buttons[q.c].querySelector('span:last-child').classList.replace('text-gray-400', 'text-green-800');
+                buttons[q.c].querySelector('span:last-child').classList.replace('border-gray-300', 'border-green-500');
+            }
+
+            const explanationBox = document.getElementById('explanation-box');
+            // Parse Markdown Bold cho phần Giải thích
+            const explHtml = q.e.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+            document.getElementById('explanation-text').innerHTML = explHtml;
+            
+            explanationBox.className = selectedIndex === q.c 
+                ? 'p-4 rounded-xl mb-6 bg-green-50 border-l-4 border-green-500 text-green-900 block shadow-inner' 
+                : 'p-4 rounded-xl mb-6 bg-red-50 border-l-4 border-red-500 text-red-900 block shadow-inner';
+
+            Array.from(buttons).forEach(btn => btn.disabled = true);
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentIndex++;
+            if (currentIndex < currentStageQuestions.length) {
+                loadQuestion();
+            } else {
+                localStorage.removeItem('philosophia_full_saved');
+                document.getElementById('quiz-screen').classList.add('hidden');
+                document.getElementById('result-screen').classList.remove('hidden');
+                document.getElementById('final-score-text').textContent = `Điểm chặng này của bạn: ${score}/${currentStageQuestions.length * 10}!`;
+                confetti({ particleCount: 200, spread: 90, origin: { y: 0.5 } });
+            }
+        }
+
+        function backToMenu() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('welcome-screen').classList.remove('hidden');
+            
+            const savedData = localStorage.getItem('philosophia_full_saved');
+            if (savedData) {
+                const data = JSON.parse(savedData);
+                document.getElementById('resume-container').classList.remove('hidden');
+                document.getElementById('saved-q-num').textContent = data.globalIndex + 1;
+            } else {
+                document.getElementById('resume-container').classList.add('hidden');
+            }
+        }
+    </script>
+</body>
+</html>
